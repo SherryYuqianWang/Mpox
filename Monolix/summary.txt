@@ -1,0 +1,114 @@
+********************************************************************************
+*                        r04_all_05.mlxtran                                    *
+*                        September 04, 2024 at 17:41:00                        *
+*                        Monolix version : 2023R1                              *
+********************************************************************************
+
+
+ESTIMATION OF THE POPULATION PARAMETERS ________________________________________
+
+Fixed Effects ----------------------------     se_sa    rse(%)
+r_pop       :                         2.77     0.445        16
+delta_pop   :                         0.38    0.0824      21.7
+beta_pop    :                     1.26e-06  1.72e-06       137
+tau_pop     :                         8.51     0.865      10.2
+
+Standard Deviation of the Random Effects -
+omega_r     :                        0.202     0.154      76.6
+omega_delta :                       0.0594     0.165       278
+omega_beta  :                         2.61     0.954      36.6
+omega_tau   :                       0.0357     0.039       109
+
+Error Model Parameters -------------------
+a           :                         2.04    0.0704      3.44
+
+Elapsed time (seconds):       17
+Exploratory phase iterations:      193 (Autostop)
+Smoothing phase iterations:        122 (Autostop)
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE INDIVIDUAL PARAMETERS ________________________________________
+
+
+Estimation of the individual parameters by Conditional Distribution ------------
+              min        Q1    median        Q3       max
+r     :      2.16      2.48       2.9      3.15      3.31
+delta :     0.376     0.378     0.383     0.385     0.385
+beta  :  2.36e-08  5.76e-07  3.71e-06  1.45e-05  2.27e-05
+tau   :      8.44      8.48      8.53      8.53      8.53
+
+Elapsed time (seconds):      4.5
+Iterations:      109 (Autostop)
+
+ -------------------------------------------------------------------------------
+
+
+Estimation of the individual parameters by Conditional Mode --------------------
+              min        Q1    median        Q3       max
+r     :      2.13      2.34      2.69         3      3.15
+delta :     0.377     0.379     0.382     0.384     0.385
+beta  :  2.43e-08  5.48e-07   3.5e-06  1.49e-05  2.39e-05
+tau   :      8.45      8.47      8.51      8.53      8.54
+
+Elapsed time (seconds):    0.067
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE FISHER INFORMATION MATRIX ____________________________________
+
+
+Estimation of the Fisher information matrix by Stochastic Approximation --------
+
+Correlation Matrix :
+      r_pop         1
+  delta_pop  -0.32844         1
+   beta_pop -0.053563  -0.17365         1
+    tau_pop  -0.24584   0.19611  -0.11145         1
+    omega_r   0.51181  -0.36196 -0.076402   0.19478         1
+omega_delta   0.16227  -0.37098   0.12031  -0.58455  -0.15758         1
+ omega_beta -0.024835 -0.027899  0.017219  0.013869  0.012903  -0.02597         1
+  omega_tau  0.063059  -0.41016  0.076824  0.059803   0.10284   0.12862  0.021024         1
+          a -0.036072   0.10083 0.0021986  0.040592 -0.036863 -0.037563  0.011409 -0.033471         1
+
+                               min       max   max/min
+Eigen values           :       0.3       2.1       7.1
+
+Elapsed time (seconds):      4.9
+Iterations:      118 (Autostop)
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE LOG-LIKELIHOOD _______________________________________________
+
+                                                            (is)
+-2 x log-likelihood                       (OFV) :        2415.41
+Akaike Information Criteria               (AIC) :        2433.41
+Corrected Bayesian Information Criteria  (BICc) :        2453.38
+Bayesian Information Criteria             (BIC) :        2427.89
+
+Elapsed time                          (seconds) :           3.40
+CPU time                              (seconds) :           3.00
+MonteCarlo size (is):    10000 (Fixed number of iterations)
+
+
+[Importance Sampling] Standard error        : 0.028
+                      Sampling distribution : T-distribution with 5 degrees of freedom
+
+ _______________________________________________________________________________
+
+DATASET INFORMATION
+Number of individuals: 4
+Number of observations (VL): 655
+Number of doses: 0
+
