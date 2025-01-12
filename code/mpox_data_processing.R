@@ -66,42 +66,8 @@ for (name in names(split_VL)) {
 
 
 
-
-combine_VL$`Days post symptoms onset`
-#Figure Individual
-ggplot(combine_VL) +
-  geom_point(aes(x=`Days post symptoms onset`,y=VL, colour=site)) +
-  geom_line(aes(x=`Days post symptoms onset`,y=VL, colour=site)) +
-  geom_hline(yintercept=DL, linetype="dashed", color = "darkgrey") +
-  #geom_point(aes(x=`Days post symptoms onset`,y=VL,colour = cut(VL, c(-Inf,-1.89,Inf))),size=0.5, shape=16, stroke = 3) +
-  #geom_point(aes(x=Day,y=VL,colour = cut(VL, c(-Inf, 17, 19, Inf))),color="#cc718b",size=0.5, shape=16, stroke = 3) +
-  #geom_line(aes(x=Day,y=aV_adjust),lwd=1, color ="#7FA2C5") +
-  #geom_ribbon(aes(x=Day,ymin=Min95,ymax=Max95), fill="#7FA2C5", alpha=0.2) +
-  facet_wrap(vars(ID), ncol=10, nrow=8)+
-  xlab("Day after symptom onset") +
-  ylab("Viral RNA load/n(copies/ml)")  +
-  #scale_x_continuous(breaks=seq(-10,40,by=10),labels = expression(-10,0,10,20,30,40),limits=c(-5,41)) +
-  #scale_y_continuous(breaks=seq(-2,10,by=3),labels = expression(10^-2,10^1,10^4,10^7,10^10),limits=c(-2,12)) +
-  #scale_color_manual(#name = "qsec",
-  #  values = c("(-Inf,-1.89]" = "#cc718b",
-  #             "(-1.89, Inf]" = "#7FA2C5"),
-  #  labels = c("<= 17", "17 < qsec <= 19", "> 19"))+
-  theme(axis.text = element_text(colour = "black"),
-        axis.ticks = element_line(colour = "black"),
-        axis.line = element_line(colour = "black"),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        panel.background = element_blank(),
-        legend.position='bottom',
-        axis.title.y = element_text(size=11,family="sans"),
-        axis.title.x = element_text(size=11,family="sans"))
-
-ggsave("figure/ind_data_1point.png", width = 12, height = 9, bg = "white")
-
-
-
 #Combine pre-symptomatic and symptomatic data#####
-pre_sym <- read_csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/submit/data/Mpox data.csv")
+pre_sym <- read_csv("data/Mpox data.csv")
 
 #unique value
 unique(pre_sym$`Sample Location`)

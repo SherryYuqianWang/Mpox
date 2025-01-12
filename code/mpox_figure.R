@@ -1,4 +1,5 @@
 library(deSolve)
+library(EnvStats)
 library(readxl)
 library(dplyr)
 library(tidyr)
@@ -7,12 +8,14 @@ library(ggplot2)
 library(ggh4x)
 library(ggsci)
 library(viridis)
+library(GGally)
+library(cowplot)
 
 rm(list=ls())
 
-
-setwd("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/submit")
-source("mpox_function.R")
+# Set your working directory to the project folder before running the script
+# Example: setwd("path/to/project")
+source("code/mpox_function.R")
 # Setting ######################################################################
 
 Tmin <- 0
@@ -20,27 +23,15 @@ Tmax <- 28
 Tmax_pre <- -8
 
 step_size <- 0.1
-times<-c(seq(Tmin,Tmax,step_size))
+times<-c(seq(Tmax_pre,Tmax,step_size))
 
 DL <- log10(10^3) # Detection limit
 
 # Figure 1 & Figure S1 Population fit ##########################################
-#old
-#pop <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r04_all_05/IndividualParameters/estimatedIndividualParameters.txt", row.names = 1)
-#sim_pop <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r04_all_05/IndividualParameters/simulatedIndividualParameters.txt")  
-#sim_ind <- split(sim_pop, f = sim_pop$id)
-
-#new
-pop <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/populationParameters.txt", row.names = 1)
-#sim_pop <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r04_all_05/IndividualParameters/simulatedIndividualParameters.txt")  
-#sim_ind <- split(sim_pop, f = sim_pop$id)
+pop <- read.csv("Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/populationParameters.txt", row.names = 1)
 
 
-#path <- "C:/Users/yuqian.wang/NTU_Sherry/8Mpox/mpox-VL.xlsx"
-#mysheets <- excel_sheets(path)
-#original <- lapply(mysheets, function(x) read_excel(path, sheet = x)) 
-
-original <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/submit/data/combine_VL_pre_and_sym_1point_limit3.csv")
+original <- read.csv("data/combine_VL_pre_and_sym_1point_limit3.csv")
 original$site <- factor(original$site, levels=c('Rectum', 'Saliva','Oropharynx'))
 original_site <- split(original, f = original$site)
 
@@ -58,32 +49,15 @@ for (g in 1:3){
   rectum <- df_cov$rectum[g]
   saliva <- df_cov$saliva[g]
   par <- c(r=pop["r_pop","value"],
-           #r=pop["r_pop","value"]*exp(rectum*pop["beta_r_site_Rectum", "value"])*exp(saliva*pop["beta_r_site_Saliva", "value"]),
-           #delta=pop["delta_pop","value"],
            delta=pop["delta_pop","value"]*exp(rectum*pop["beta_delta_site_Rectum", "value"])*exp(saliva*pop["beta_delta_site_Saliva", "value"]),
-           #beta=pop["beta_pop","value"],
            beta=pop["beta_pop","value"]*exp(rectum*pop["beta_beta_site_Rectum", "value"])*exp(saliva*pop["beta_beta_site_Saliva", "value"]),
-           #v=pop["v_pop","value"])
-           v=pop["v_pop","value"]*exp(rectum*pop["beta_v_site_Rectum", "value"])*exp(saliva*pop["beta_v_site_Saliva", "value"]))
-  #par <- c(r=pop["gamma_pop","value"],
-  #         delta=pop["delta_pop","value"],
-  #         beta=pop["beta1_pop","value"]*(10^-5),
-  #         v=0.01)
+           v=pop["v_pop","value"]*exp(rectum*pop["beta_v_site_Rectum", "value"])*exp(saliva*pop["beta_v_site_Saliva", "value"]),
+           tau=8) #mean of incubation period
+
+  best_fit <- Mpoxfun_pre(par,incu=0)
   
-  #n=227
-  #par<-c(
-  #  r=original_ind[n,"r_SAEM"],
-  #  delta=original_ind[n,"delta_SAEM"],
-  #  beta=original_ind[n,"beta_SAEM"],
-  #  v=original_ind[n,"v_SAEM"])
-  
-  #best_fit <- Mpoxfun(par)
-  best_fit <- Mpoxfun_pre(par)
-  #plot(best_fit)
-  
-  #pars <- sim_ind[[g]][,3:5]
   pars <- sample_pars_pop(pop, num, rectum, saliva)
-  total_VL <- run_ODE_pop(pars)
+  total_VL <- run_ODE_pop(pars,incu=0)
   
   MeanVL <- apply(total_VL,1,function(x){quantile(x,0.5,na.rm=T)})
   Min95  <- apply(total_VL,1,function(x){quantile(x,0.025,na.rm=T)})
@@ -112,14 +86,14 @@ combine_pop$Sample <- factor(combine_pop$Sample, levels=c('Rectum', 'Saliva','Or
  
 #Calculate viral shedding duration
 shedding <- combine_pop %>%
-  filter(time > 3) %>%
+  filter(time > 5) %>%
   group_by(Sample) %>%
   mutate(
     shedding_mean = ifelse(MeanVL <= 3, time, NA),
     shedding_best_fit = ifelse(best_fit <= 3, time, NA)
   ) %>%
   summarize(
-    shedding_mean = min(shedding_mean, na.rm = TRUE),
+    #shedding_mean = min(shedding_mean, na.rm = TRUE),
     shedding_best_fit = min(shedding_best_fit, na.rm = TRUE)
   ) %>%
   ungroup()
@@ -127,27 +101,15 @@ shedding <- combine_pop %>%
 ##Figure S1 Estimated viral load curve##########################################
 
 ggplot(data=combine_pop) +
-  #geom_point(aes(x=time,y=VL,colour = cut(VL, c(-Inf,3,Inf))),size=0.5, shape=16, stroke = 3) +
-  #geom_point(aes(x=time,y=VL,colour = Sample),shape=16,alpha=0.5) +
-  geom_jitter(aes(x = time, y = VL, colour = Sample), height = 0.3, width = 0.3, size = 0.8, shape = 16)+
-  #geom_jitter(aes(x=time,y=VL,colour = Sample)) +
-  #geom_line(aes(x=time,y=best_fit),lwd=1, color ="#7FA2C5") +
+  geom_point(aes(x=time,y=VL,colour = Sample),shape=16,alpha=0.5) +
   geom_line(aes(x=time,y=MeanVL,colour=Sample),lwd=1) +
-  #geom_line(aes(x=time,y=MeanVL),lwd=1, color ="green") +
   geom_hline(yintercept=DL, linetype="dashed", color = "red",alpha=0.7) +
-  #geom_ribbon(aes(x=time,ymin=Min95,ymax=Max95),fill="#7FA2C5",alpha=0.2) +
   geom_ribbon(aes(x=time,ymin=Min95,ymax=Max95,fill=Sample),alpha=0.1) +
   geom_ribbon(aes(x=time,ymin=Min50,ymax=Max50,fill=Sample),alpha=0.3) +
-  #geom_ribbon(aes(x=time,ymin=Min50,ymax=Max50),fill="#7FA2C5",alpha=0.4) +
-  #geom_ribbon(aes(x=time,ymin=Min50,ymax=Max50,fill=Sample),alpha=0.1) +
   xlab("Time after symptom onset (Days)") +
-  ylab("Viral RNA load/n(copies/ml)")  +
-  #scale_x_continuous(breaks=seq(-8,28,by=4),labels = expression(-8,-4,0,4,8,12,16,20,24,28),limits=c(-9,28)) +
+  ylab("Viral load (copies/ml)")  +
   scale_x_continuous(breaks=seq(-8,28,by=4),labels = expression(-8,-4,0,4,8,12,16,20,24,28),limits=c(-8,28)) +
   scale_y_continuous(breaks=seq(-2,10,by=2),labels = expression(10^-2,10^0,10^2,10^4,10^6,10^8,10^10),limits=c(-2,10.5)) +
-  #scale_color_manual(
-  #  values = c("(-Inf,3]" = "#cc718b",
-  #             "(3, Inf]" = "#7FA2C5"))#+
   facet_wrap(vars(Sample))+
   scale_color_brewer(palette = "Dark2")+
   scale_fill_brewer(palette = "Dark2")+
@@ -155,61 +117,96 @@ ggplot(data=combine_pop) +
 
 ggsave("figure/Figure1.png", width = 8, height = 2.5,bg = "white")
 
+
 #Figure Individual fit#########################################################
-original_ind <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r10_pre_sym_1point_nontau_inits_RDeltaBetaV/IndividualParameters/estimatedIndividualParameters.txt") #%>%
-  #mutate(Severity = case_when(intubated_ever == 1|icu_ever == 1|death == 1  ~ "Critical",
-  #                            supp_o2_ever == 0 ~ "Mild",
-  #                           supp_o2_ever == 1 ~ "Severe"),
-  #       Vaccination = case_when(vaccinated == 0 ~ "No",
-  #                               vaccinated == 1 ~ "Yes"))
+original_ind <- read.csv("data/combine_VL_pre_and_sym_1point_limit3.csv") 
 colnames(original)[c(1,16)] <- c("Code","VL")
 
-#target-cell limited model
-Est <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/IndividualParameters/estimatedIndividualParameters.txt", sep = ",", comment.char = "", header = T)
-Simulated <- read.csv("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/IndividualParameters/simulatedIndividualParameters.txt", sep = ",", comment.char = "", header = T)
-
-
+#individual fit from Monolix
+Est <- read.csv("Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/IndividualParameters/estimatedIndividualParameters.txt", sep = ",", comment.char = "", header = T)
 
 #Generate figures
 ind_fit <- list()
-ind_fit <- ind_fit_plt1(Est,Simulated)
+ind_fit <- ind_fit_plt(Est)
 
-pdf(paste0("C:/Users/yuqian.wang/NTU_Sherry/2trial_design/5code/github/Figure/r12", ".pdf"), 11, 10)
-for (i in seq(1, length(unique(ind_fit$Code)), 49)) {
-  print(
-    ggplot(ind_fit[ind_fit$Code %in% levels(ind_fit$Code)[i:(i+48)],]) +
-      geom_point(aes(x=Day,y=VL,colour = cut(VL, c(-Inf,-1.89,Inf))),size=0.5, shape=16, stroke = 3) +
-      #geom_point(aes(x=Day,y=VL,colour = cut(VL, c(-Inf, 17, 19, Inf))),color="#cc718b",size=0.5, shape=16, stroke = 3) +
-      geom_line(aes(x=Day,y=aV),lwd=1, color ="#7FA2C5") +
-      geom_ribbon(aes(x=Day,ymin=Min90,ymax=Max90), fill="#7FA2C5", alpha=0.2) +
-      geom_text(aes(x=23,y=11,label = paste(
-        ifelse(!is.na(Age), paste(Age,","), ""),
-        ifelse(!is.na(Vaccination), paste(Vaccination,","), ""),
-        ifelse(!is.na(Severity), Severity, ""))), size=3) + 
-      facet_wrap(vars(Code), ncol=7, nrow=7)+
+ind_fit$site <- factor(ind_fit$site, levels=c('Rectum', 'Saliva','Oropharynx'))
+
+
+ind_fit_sub <- ind_fit %>%
+  group_by(ID_site) %>%
+  mutate(ID = as.character(ID)) %>%
+  filter(any(censor == 0)) %>%
+  ungroup() %>%
+  mutate(ID = as.factor(ID))
+
+  ggplot(ind_fit_sub) +
+      geom_jitter(aes(x=Day,y=VL,colour=site,shape=censor),size=2,height=0.1,width = 0.2) +
+      geom_line(aes(x=Day,y=aV,colour=site),lwd=0.7) +
+      facet_wrap(vars(ID), ncol=8, nrow=10)+
       xlab("Day after symptom onset") +
       ylab("Viral RNA load/n(copies/ml)")  +
-      scale_x_continuous(breaks=seq(-10,40,by=10),labels = expression(-10,0,10,20,30,40),limits=c(-5,41)) +
-      scale_y_continuous(breaks=seq(-2,10,by=3),labels = expression(10^-2,10^1,10^4,10^7,10^10),limits=c(-3,12)) +
-      scale_color_manual(#name = "qsec",
-        values = c("(-Inf,-1.89]" = "#cc718b",
-                   "(-1.89, Inf]" = "#7FA2C5"),
-        labels = c("<= 17", "17 < qsec <= 19", "> 19"))+
-      theme(axis.text = element_text(colour = "black"),
-            axis.ticks = element_line(colour = "black"),
-            axis.line = element_line(colour = "black"),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            legend.position='none',
-            axis.title.y = element_text(size=11,family="sans"),
-            axis.title.x = element_text(size=11,family="sans")))
+      scale_x_continuous(breaks=seq(0,30,by=10),labels = expression(0,10,20,30),limits=c(-8,30)) +
+      scale_y_continuous(breaks=seq(0,9,by=3),labels = expression(10^0,10^3,10^6,10^9),limits=c(-1,11)) +
+      scale_shape_manual(values = c("1" = 1, "0" = 16))+
+      scale_color_brewer(palette = "Dark2")+
+      guides(shape = "none")+
+      mpox_theme()+
+      theme(legend.position='bottom')
   
+ggsave("figure/Figure_ind_SAEM_censor_site.png", width = 10, height = 12,bg = "white")
+    
+#Correlation oro and saliva####################################################
+
+# Function to generate a ggpairs plot for a given variable prefix
+colnames(Est)[2]<-"gamma_SAEM"
+Est$`log10(V)_SAEM` <- log10(Est$v_SAEM) #for visualization we use log10 transform here
+
+cor_plot <- function(variable) {
+  test <- Est[,c("id","gamma_SAEM","delta_SAEM","beta_SAEM","v_SAEM")] %>%
+    separate(id, into = c("ID", "site"), sep = "[, _/]") %>%
+    select(ID, site, starts_with(variable)) %>%
+    mutate(site = case_when(site == "Rectum" ~ "rectum",
+                            site == "Saliva" ~ "saliva",
+                            site == "Oropharynx" ~ "oropharynx")) %>%
+    pivot_wider(
+      names_from = site,
+      values_from = starts_with(variable),
+      names_glue = paste0(variable,"_{site}")
+      )
+  
+  # Create the plot
+  plt <-ggpairs(
+    test[,-1]#, # Exclude ID
+    #upper = list(continuous = wrap("cor", method = "spearman", size = 4))
+    #lower = list(continuous = "points"),
+    #diag = list(continuous = "barDiag")
+  ) + mpox_theme()+
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1, size = 8)  # Adjust angle and size
+    )
+    
+  
+  ggmatrix_gtable <- ggmatrix_gtable(plt)
 }
-dev.off()
+
+# Generate plots for each variable
+plot_r <- cor_plot("gamma")
+plot_beta <- cor_plot("beta")
+plot_delta <- cor_plot("delta")
+plot_v <- cor_plot("v")
 
 
+# Combine the plots in a 2x2 grid
+combined_plot <- plot_grid(
+  plot_r, plot_beta,
+  plot_delta, plot_v,
+  labels = c("A", "B", "C", "D"),
+  ncol = 2
+)
+# Display the combined plot
+print(combined_plot)
 
+ggsave("figure/Figure_v_cor.png", width = 10, height = 8,bg = "white")
 
 
 ##Figure 1 Estimated viral load of different sites##############################
@@ -230,12 +227,15 @@ ggsave("plot/Figure1.png", width = 7, height = 4.5,bg = "white")
 write.csv(combine_pop,"output/VLpop.csv")
 
 # Figure 2 false-negative #######################################################
-
 num = 10000
+
 Tmin <- 0
-Tmax <- 37
+Tmax <- 30
+#Tmax_pre <- -8
+
 step_size <- 1
-times <- c(seq(Tmin,Tmax,step_size))
+#times<-c(seq(Tmax_pre,Tmax,step_size))
+times<-c(seq(Tmin,Tmax,step_size)) #start from day 0 of infection
 
 # Define values and their corresponding names
 DL_values <- c(log10(10),log10(250),log10(1000))
@@ -243,17 +243,16 @@ DL_names <- c("10", "250", "1000")
 
 fn_list <- list()
 
-fn_name <- list(Skin = 1,
-                Rectum = 2,
-                Saliva=3,
-                Oropharynx=4)
+fn_site <- list(c("Rectum", 1,0),
+                c("Saliva", 0,1),
+                c("Oropharynx",0,0))
 
-fn_list <- map(fn_name, simulation_false_neg)
+combine_fn <- map(fn_site, simulation_false_neg) %>%
+  set_names(map_chr(fn_site, ~ .x[1])) %>%
+  map_df(~as.data.frame(.x), .id = "Sample")
 
-combine_fn <- map_df(fn_list, ~as.data.frame(.x), .id = "Sample") %>%
-  mutate(Sample = ifelse(Sample == "Skin", "Skin lesion", Sample))
-  
-combine_fn$Sample <- factor(combine_fn$Sample, levels=c('Skin lesion', 'Rectum', 'Saliva','Oropharynx'))
+
+combine_fn$Sample <- factor(combine_fn$Sample, levels=c('Rectum', 'Saliva','Oropharynx'))
 combine_fn$DL <- factor(combine_fn$DL, levels=c('10', '250', '1000'))
 
 #calculate min false-negative rate
@@ -266,73 +265,102 @@ min <- combine_fn %>%
 ggplot(data=combine_fn) +
   geom_step(aes(x=times,y=FN,linetype=DL,colour=Sample),lwd=0.7) +
   facet_wrap(vars(Sample))+
-  xlab("Time after infection (Days)") +
-  ylab("False-negative rate")  +
-  scale_x_continuous(breaks=seq(0,40,by=4),labels = expression(0,4,8,12,16,20,24,28,32,36,40),limits=c(-1,40)) +
+  xlab("Time after infection (Days)")+
+  ylab("False-negative rate")+
+  ylim(0,1)+
+  scale_x_continuous(breaks=seq(0,32,by=4),labels = expression(0,4,8,12,16,20,24,28,32),limits=c(-1,32))+
   scale_color_brewer(palette = "Dark2")+
   scale_fill_brewer(palette = "Dark2")+
-  scale_linetype_manual(values=c("longdash","dotted","solid")) +  
+  scale_linetype_manual(values=c("longdash","dotted","solid"))+
   labs(linetype = "Detection limit\n(copies/mL)")+
   guides(color = "none")+  
   mpox_theme()+
   theme(legend.position = "right")
 
-ggsave("plot/Figure2.png", width = 7, height = 4.2,bg = "white")
+
+ggsave("figure/Figure_neg_10k.png", width = 8, height = 2.5,bg = "white")
+
+##visualize simulation data (with tau)################################
+
+total_VL <- pred_VL + measure_error
+
+fit <- cbind(times,MeanVL,Min95,Max95,Min50,Max50)
+
+
+ggplot(fit) +
+  geom_line(aes(x=times,y=MeanVL),lwd=1) +
+  geom_ribbon(aes(x=times,ymin=Min95,ymax=Max95),alpha=0.1) +
+  geom_ribbon(aes(x=times,ymin=Min50,ymax=Max50),alpha=0.3) +
+  xlab("Time after infection (Days)") +
+  ylab("Viral RNA load/n(copies/ml)")  +
+  mpox_theme()
+
 
 # Figure 3 & Figure S2 importation incubation ##################################
 
 dt=0.1; # time clock
-k=17; # maximum day of incubation period of mpox
-Max_t=20; # maximum day of the simulation
-R0=1.3 # reproduction number for mpox
+k=14; # maximum duration of travel (set 3 weeks here; can change to 2weeks/4weeks)
+Max_t=30; # maximum day of the simulation
+R0=1.5 # reproduction number for mpox
+R0=1 # endemic state
 T=8.7 # mean of serial interval for mpox
 r=(R0-1)/T # growth rate incase the serial interval follows exponential distribution for mpox
 #r=log(R0)/T # growth rate incase the serial interval follows rectangular distribution for mpox
-myu=log(9.9) # a parameter for incubation period distribution (lognormal)
-sigma=0.3 # a parameter for incubation period distribution (lognormal)
+myu=1.917 # a parameter for incubation period distribution (lognormal)
+sigma=0.592 # a parameter for incubation period distribution (lognormal)
 
-num = 10000
+num = 1000
 Tmin <- 0
-Tmax <- 37
+Tmax <- k+Max_t
 step_size <- 0.1
-times <- c(seq(Tmin,Tmax,step_size))
+times<-c(seq(Tmin,Tmax,step_size))
 
 DL_values <- c(log10(10),log10(250),log10(1000),1000000)
 DL_names <- c("10", "250", "1000","HS")
 
-
-fn_name <- list(Skin = 1,
-                Rectum = 2,
-                Saliva=3,
-                Oropharynx=4)
-
 fn_fig3 <- list()
-fn_fig3 <- map(fn_name, simulation_false_neg)
+
+fn_site <- list(c("Rectum", 1,0),
+                c("Saliva", 0,1),
+                c("Oropharynx",0,0))
+
+fn_fig3 <- map(fn_site, simulation_false_neg) %>%
+  set_names(map_chr(fn_site, ~ .x[1]))  
+
+combine_fig3 <- map_df(fn_fig3, ~as.data.frame(.x), .id = "Sample")
 
 
 ##Figure S2 post-entry incubation period distribution###########################
 
+
 ct_plt_bind <- list()
 
-ct_plt_bind <- map(fn_fig3,cal_ct)
-combine_ct <- map_df(ct_plt_bind, ~as.data.frame(.x),.id = "Sample") %>%
-  mutate(Sample = ifelse(Sample == "Skin", "Skin lesion", Sample),
-         DL= case_when(DL == "10" ~ "HS+PCR1",
+ct_plt_bind <- map(fn_fig3,cal_ct) 
+
+combine_ct_plt1 <- ct_plt_bind %>%
+  map_df(~as.data.frame(.x),.id = "Sample") %>%
+  mutate(DL= case_when(DL == "10" ~ "HS+PCR1",
                        DL == "250" ~ "HS+PCR2",
                        DL == "1000" ~ "HS+PCR3",
                        DL == "HS" ~ "HS",
-                       DL == "No tests" ~ "No tests"))
+                       DL == "No tests" ~ "No tests"),
+         Sample = factor(Sample, levels = c('Rectum', 'Saliva', 'Oropharynx')),
+         DL = factor(DL, levels = c('HS+PCR1', 'HS+PCR2', 'HS+PCR3', 'HS', 'No tests'))) %>%
+  subset(!(DL== 'No tests'))
 
-combine_ct$Sample <- factor(combine_ct$Sample, levels=c('Skin lesion', 'Rectum', 'Saliva','Oropharynx'))
-combine_ct$DL <- factor(combine_ct$DL, levels=c('HS+PCR1', 'HS+PCR2', 'HS+PCR3','HS','No tests'))
+combine_ct_plt$group <- "Epidemic"
+combine_ct_plt1$group <- "Endemic"
+#ombine_ct_sub2$group <- "exp2"
 
-combine_ct_sub <- subset(combine_ct, !((Sample == 'Skin lesion' & DL %in% c('HS+PCR1', 'HS+PCR2', 'HS+PCR3'))| DL== 'No tests'))
+combine_sub2<-as.data.frame(rbind(combine_ct_plt,combine_ct_plt1)) %>%
+  mutate(group = factor(group, levels = c('Epidemic','Endemic')))
 
-ggplot(data=combine_ct_sub) +
+
+ggplot(data=combine_ct_plt1) +
   geom_line(aes(x=times,y=ct,linetype=DL,colour=Sample,lwd=DL)) +
   xlab("Time after immigration (days)") +
   ylab("Probability of illness onset")+
-  scale_x_continuous(breaks=seq(0,20,by=4),labels = expression(0,4,8,12,16,20),limits=c(0,20)) +
+  scale_x_continuous(breaks=seq(0,28,by=4),labels = expression(0,4,8,12,16,20,24,28),limits=c(0,28)) +
   scale_color_brewer(palette = "Dark2")+
   scale_fill_brewer(palette = "Dark2")+
   scale_linewidth_manual(values=c(0.4,0.7,0.5,0.6,0.3)) +
@@ -343,14 +371,10 @@ ggplot(data=combine_ct_sub) +
   mpox_theme()+
   theme(legend.position = "right")
 
-ggsave("plot/FigureS2.png", width = 7.5, height = 4.7,bg = "white")
-
+ggsave("figure/FigureS21.png", width = 7, height = 3.8,bg = "white")
 
 ## Figure 3 bar chart of effectiveness of health screening and PCR##############
-
-combine_ct_sub <- subset(combine_ct, Sample != 'Skin lesion')
-
-pie_plt <- combine_ct_sub[combine_ct_sub$DL != "No tests",c(1,4,7,8,9)] %>% 
+pie_plt <- combine_ct_plt[combine_ct_plt$DL != "No tests",c(1,4,7,8,9)] %>% 
   group_by(Sample,DL) %>% 
   slice(1) %>%
   pivot_longer(-c(1:2), names_to = "type",values_to = "prob") %>%
@@ -370,38 +394,38 @@ ggplot(pie_plt, aes(x = DL, y = prob, fill=type)) +
   geom_text(aes(label = labels), size=3.5,
             position = position_stack(vjust = 0.5))+
   mpox_theme()+
-  theme(legend.position = "right")
+  theme(legend.position = "right",
+        axis.text.x = element_text(angle = 20, vjust = 0.75),
+        axis.title.x = element_blank())
 
-ggsave("plot/Figure3.png", width = 10, height = 3.1,bg = "white")
+ggsave("figure/Figure3_uni.png", width = 8, height = 2.5,bg = "white")
 
 #Figure 4 70th, 80th, 95th percentile of post-entry incubation period ##########
 
 tile_plt <- list()
 
 tile_plt <- map(ct_plt_bind,cal_ct_tile)
-combine_tile <- map_df(tile_plt, ~as.data.frame(.x),.id = "Sample")
-
-
-combine_tile <- combine_tile %>%
+combine_tile <- map_df(tile_plt, ~as.data.frame(.x),.id = "Sample") %>%
   mutate(DL = case_when(DL == "10"  ~ "HS+PCR1", 
                         DL == "250" ~ "HS+PCR2",
                         DL == "1000" ~ "HS+PCR3",
                         DL == "HS" ~ "HS",
                         DL == "No tests" ~ "No tests"))
 
-combine_tile_sub <- subset(combine_tile, Sample != 'Skin')
-combine_tile_sub$Sample <- factor(combine_tile_sub$Sample, levels=c('Rectum', 'Saliva','Oropharynx'))
-combine_tile_sub$DL <- factor(combine_tile_sub$DL, levels=c('HS+PCR1', 'HS+PCR2', 'HS+PCR3','HS','No tests'))
+combine_tile$Sample <- factor(combine_tile$Sample, levels=c('Rectum', 'Saliva','Oropharynx'))
+combine_tile$DL <- factor(combine_tile$DL, levels=c('HS+PCR1', 'HS+PCR2', 'HS+PCR3','HS','No tests'))
 
-ggplot(data=combine_tile_sub, aes(x=DL, y=duration)) +
+ggplot(data=combine_tile, aes(x=DL, y=duration)) +
   geom_bar(aes(fill=DL),stat="identity",alpha=0.6,width = 0.65)+
-  scale_y_continuous(breaks=seq(0,15,by=5),labels = expression(0,5,10,15),limits=c(0,16.3)) +
-  facet_grid2(vars(Sample),vars(tile), axes = "y",remove_labels = "x")+
+  facet_grid2(vars(tile), vars(Sample), axes = "y",remove_labels = "x")+
   scale_fill_brewer(palette = "Dark2")+
   ylab("Time after immigration (Days)")  +
   theme_bw()+
-  mpox_theme()
+  mpox_theme()+
+  theme(legend.position="none",
+        axis.text.x = element_text(angle = 20, vjust = 0.75),
+        axis.title.x = element_blank())
 
-ggsave("plot/Figure4.png", width = 10, height = 4,bg = "white")
+ggsave("figure/Figure4_uni.png", width = 7, height = 3, bg = "white")
 
-write.csv(combine_tile_sub, "output/percentile_incubation.csv")
+write.csv(combine_tile, "output/percentile_incubation_exp.csv")

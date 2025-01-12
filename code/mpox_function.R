@@ -21,11 +21,18 @@ Mpoxfun<-function(pars){
 }
 
 
-Mpoxfun_tau<-function(pars){
+Mpoxfun_pre<-function(pars,incu){
   r <- as.numeric(pars[1])
   delta <- as.numeric(pars[2])
   beta <- as.numeric(pars[3])
   v <- as.numeric(pars[4])
+  
+  if (incu == 0){
+    tau <- 8
+  } else {
+    tau <- round(as.numeric(pars[5]),0)
+  }
+  
   derivs<-function(time,y,pars){
     with(as.list(c(pars,y)),{
       dTa<--beta*Ta*V
@@ -37,13 +44,13 @@ Mpoxfun_tau<-function(pars){
   
   y<-c(Ta=1,V=v)
   
-  times<-c(seq(Tmin,Tmax,step_size))
-  times_pre<-c(seq(Tmin,Tmax_pre,-step_size))
+  times<-c(seq(Tmin,(Tmax-tau),step_size))
+  times_pre<-c(seq(Tmin,-tau,-step_size))
   
   out_after<-ode(y=y,parms=pars,times=times,func=derivs)
   out_before<-ode(y=y,parms=pars,times=times_pre,func=derivs)
   #out<-lsoda(y=y,parms=pars,times=times,func=derivs,rtol=0.00004,atol=0.00000000000001)
-  out<-rbind(out_before[-1,],out_after)
+  out<-rbind(out_before[nrow(out_before):2,],out_after)
   out2<-cbind(Day=out[,1],aV=((log10(out[,3]))))
   as.data.frame(out2)
 }
@@ -71,7 +78,7 @@ sample_pars_pop <- function(pop, num, rectum, saliva){
   inds_mean <- which(rownames(pop) %in% c("r_pop","delta_pop","beta_pop","v_pop"))
   inds_sd <- which(rownames(pop) %in% c("omega_r","omega_delta","omega_beta","omega_v"))
   
-  pars <- matrix(0, num, length(inds_mean))
+  pars <- matrix(0, num, (length(inds_mean)+1))
   
   for (i in 1:length(inds_mean)) {
     mean_par <- pop$value[inds_mean[i]]
@@ -92,8 +99,9 @@ sample_pars_pop <- function(pop, num, rectum, saliva){
     } else { 
       pars[, i] <- exp(rnorm(num, mean=log(mean_par), sd=sd_par))
       
-    }
-    
+    } 
+      pars[, 5] <- round(rlnormTrunc(num, meanlog=1.917, sdlog=0.592, min=1, max=26),0) #tau:incubation period
+
   }  
   
   #mean_r <- pop$value[inds_mean[1]]+vac*mean_r_vac
@@ -113,13 +121,13 @@ sample_pars_pop <- function(pop, num, rectum, saliva){
 
 
 #Solve ODE for sampled parameters###############################################
-run_ODE_pop <- function(pars){
+run_ODE_pop <- function(pars,incu){
   
+  #total_VL <- matrix(NA,nrow=length(seq(Tmin,Tmax,step_size)),ncol=num)
   total_VL <- matrix(NA,nrow=length(seq(Tmax_pre,Tmax,step_size)),ncol=num)
-  #total_VL <- matrix(NA,nrow=length(seq(Tmax_pre,Tmax,step_size)),ncol=num)
   
   for(i in 1:num){
-    out <- Mpoxfun_pre(as.numeric(pars[i, ]))
+    out <- Mpoxfun_pre(as.numeric(pars[i, ]),incu)
     total_VL[,i] <- out$aV
   }
   return(total_VL)
@@ -133,31 +141,28 @@ ind_fit_plt<-function(Est){
   for(i in 1:nrow(Est)){
     #infect <- Est$Infect[i]
     #doi <- Est$DoI[i]
-    pars <- c(beta=Est$beta_SAEM[i],
-              phi=Est$phi_SAEM[i],
-              rho=Est$rho_SAEM[i],
+    pars <- c(r=Est$r_SAEM[i],
               delta=Est$delta_SAEM[i],
-              pi=Est$pi_SAEM[i],
-              tau=Est$tau_SAEM[i],
-              imtau=Est$imtau_SAEM[i],
-              m=Est$m_SAEM[i])
-    fitted <- Mpoxfun(pars)
+              beta=Est$beta_SAEM[i],
+              v=Est$v_SAEM[i],
+              tau=8)
+    fitted <- Mpoxfun_pre(pars,incu=0)
     #fitted_pre <- Covfun_pre(pars)
     #d1 <- rbind(fitted,fitted_pre[-1,])
-    index <- which(fitted$aV < -2)[1]
+    #index <- which(fitted$aV < -2)[1]
     # Check if an index was found, and then replace the value
-    if (!is.na(index)) {
-      fitted$aV[index] <- -2
-    } 
+    #if (!is.na(index)) {
+    #  fitted$aV[index] <- -2
+    #} 
     
-    d1 <- fitted
-    Code <- Est$id[i]
+    #d1 <- fitted
+    ID_site <- Est$id[i]
     #gender <- Est$Gender[i]
     #booster <- Est$X_1st_Booster_vaccine_type[i]
     #age_cat <- Est$age_cat[i]
-    original_subset <- original %>%
-      filter(Code == Est$id[i]) %>%
-      mutate(Day = Days_from_Onset + round(pars[6])) 
+    original_subset <- original_ind %>%
+      filter(ID_site == Est$id[i]) %>%
+      mutate(Day = `Days.post.symptoms.onset`) 
     
     #S <- 100 ###100 repeats
     #P <- matrix(NA,nrow=(Tmax+1),ncol=S) #pre-sym and after-sym
@@ -182,36 +187,30 @@ ind_fit_plt<-function(Est){
     #Max90  <- apply(P,1,function(x){quantile(x,0.95,na.rm = TRUE)})
     #Max95  <- apply(P,1,function(x){quantile(x,0.975,na.rm = TRUE)})
     
-    fit <- cbind(d1,Min95,Min90,Max90,Max95,Code)
-    fit$Min95[fit$Min95 < -2] <- -2
-    fit$Min90[fit$Min90 < -2] <- -2
-    fit <- merge(fit, original_subset[,c("Code","Day","VL","Age","Vaccination","Severity")], by=c("Code", "Day"),all=TRUE)
+    fit <- cbind(fitted,ID_site,t(pars))
+    #fit$Min95[fit$Min95 < -2] <- -2
+    #fit$Min90[fit$Min90 < -2] <- -2
+    fit <- merge(fit, original_subset[,c("ID_site","VL","censor","Day")], by=c("ID_site", "Day"),all=TRUE)
     
     Fit[[i]] <- data.frame(fit)
     
     
   }
   
-  ind_fit <- map_df(Fit, ~as.data.frame(.x))
+  ind_fit <- map_df(Fit, ~as.data.frame(.x)) %>%
+    separate(ID_site, into = c("ID", "site"), sep = "[, _/]",remove = FALSE) %>%
+    mutate(ID_site = as.factor(ID_site),
+           ID = as.factor(ID),
+           site = as.factor(site),
+           censor = as.factor(censor))
   
   #ind_fit <- merge(ind_fit_unlist, original[,c(1,6,16)], by=c("Code", "Day"),all=TRUE) 
   
-  ind_fit$Code <- as.factor(ind_fit$Code)
+  #ind_fit$Code <- as.factor(ind_fit$Code)
   #ind_fit <- ind_fit %>% mutate(aV_adjust = ifelse((Day == -1) & (aV < -2 | is.na(aV)) , -1.89, aV))
   #colnames(ind_fit)[11:14] <- c("WT IgG","BA1 IgG","WT IgA","BA1 IgA")
   return(ind_fit)
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -258,23 +257,29 @@ cal_fn_and_cis <- function(values, names,measure_VL) {
   results_df
 }
 
-
+#fn_site <- fn_site[[1]]
 #Simulation to generate false negative plot######
-simulation_false_neg<-function(fn_name){
-  pars <- sample_pars_pop(pop,fn_name)
-  pred_VL <- run_ODE_pop(pars)
+simulation_false_neg<-function(fn_site){
+  rectum <- as.numeric(fn_site[2])
+  saliva <- as.numeric(fn_site[3])
   
-  measure_error <- matrix(rnorm(num * length(times), mean = 0, sd = 1)*2.04,  #a=2.04
-                          nrow = length(times),ncol = num)
+  pars <- sample_pars_pop(pop,num,rectum,saliva)
+  pred_VL <- run_ODE_pop(pars,incu=1)
   
-  measure_VL <- pred_VL + measure_error
+  measure_error <- matrix(rnorm(num * nrow(pred_VL), mean = 0, sd = 1)*1.4,  #a=1.4
+                          nrow = nrow(pred_VL), ncol = num)
   
-  results <- cal_fn_and_cis(DL_values, DL_names,measure_VL)
+  measure_VL <- (pred_VL + measure_error) %>%
+    replace(is.na(.), -11) #replace NA to very low value
+  
+  results <- cal_fn_and_cis(DL_values, DL_names, measure_VL)
+  
   
   df_false_neg <- data.frame(times,results) %>% rename_with(~ gsub("^X", "", .), starts_with("X")) %>%
-    pivot_longer(cols=-1, names_to = "DL", values_to = "FN") %>%
-    mutate(FN = ifelse(times < 9.9 & fn_name == 1,1,FN))##false-neg equal to 1 before symptomatic (skin sample)
+    pivot_longer(cols=-1, names_to = "DL", values_to = "FN") #%>%
+    #mutate(FN = ifelse(times < 9.9 & fn_name == 1,1,FN))##false-neg equal to 1 before symptomatic (skin sample)
   return(df_false_neg)
+  #return(measure_VL)
 }
 
 #Calculate probability density function of illness onset at time t##############
@@ -283,7 +288,7 @@ cal_ct <- function(fn_fig3){
   
   for (g in 1:(length(DL_names)+1)){
     
-    if(g < (length(DL_names)+1)){
+    if(g <= length(DL_names)){
       
       P <- as.vector(t(subset(fn_fig3, DL == DL_names[g])[3]))
       c <- rep(0,Max_t/dt) # frequency of illness onset (or observed incubation period using time since immigration as a time scale)
@@ -295,23 +300,23 @@ cal_ct <- function(fn_fig3){
         j <- rep(0, k/dt) # density of incubating population at infection-age tau at the timing of immigration (t=0); initial age distribution
         
         for (i in 1:(s/dt)){  # incubation period and survival prob.
-          f[i]=plnorm(i*dt, myu, sigma)-plnorm((i-1)*dt, myu, sigma)
+          f[i]=plnorm(i*dt, myu, sigma)-plnorm((i-1)*dt, myu, sigma) #cumulative probability density function
           L[i]=1-plnorm(i*dt, myu, sigma)
         }
         
-        for (tau in 1:(k/dt)){  # the distribution of infected day
+        for (tau in 1:(k/dt)){  
           j[tau]=exp(-r*tau*dt)
         }
         j=j/sum(j)
         
         
-        for (tau in 1:(k/dt)){  # the distribution of infected day
+        for (tau in 1:(k/dt)){  
           j[tau]=j[tau]*L[tau]
         }
         
         prob_1 <- 1-sum(j)
         
-        for (tau in 1:(k/dt)){  # the distribution of infected day
+        for (tau in 1:(k/dt)){  
           j[tau]=j[tau]*P[tau]
         }
         
@@ -324,7 +329,7 @@ cal_ct <- function(fn_fig3){
         }
       }
       
-      c=c/sum(c)
+      c=c/sum(c)  #should be c*step_size
       C=cumsum(c)
       sumc=sum(c)
       f=f/sum(f)
@@ -340,31 +345,37 @@ cal_ct <- function(fn_fig3){
         c[i]=plnorm(i*dt, myu, sigma)-plnorm((i-1)*dt, myu, sigma)
         #c[i]=dlnorm(i*dt, myu, sigma)
         c=c/sum(c)
+        C=cumsum(c)
         x=seq(1*dt, Max_t, dt)
         ct_plt[[g]] <- data.frame(times=x,ct=c,DL="No tests",cumc=C,sumc=sumc,prob1=0,prob2=0,prob3=1)
-      }
+     }
     }
   }
   ct_plt_bind <- map_df(ct_plt, ~as.data.frame(.x))
   return(ct_plt_bind)
 }
 
-
+#ct_plt_bind <- ct_plt_bind[[1]]
 #Calculate 70th,80th,95th percentiles of post entry incubation period###########
 cal_ct_tile <- function(ct_plt_bind){
   ct_sub <- ct_plt_bind %>% group_split(DL)
   tile_sub <- list()
   for (i in 1:5){
     if (i<5){
-      a<-min(which(ct_sub[[i]][,4] >= 0.7))/10
-      b<-min(which(ct_sub[[i]][,4] >= 0.8))/10
-      c<-min(which(ct_sub[[i]][,4] >= 0.95))/10
+      a<-min(which(ct_sub[[i]][,4] >= 0.7))*step_size
+      b<-min(which(ct_sub[[i]][,4] >= 0.8))*step_size
+      c<-min(which(ct_sub[[i]][,4] >= 0.95))*step_size
+      median_value<-min(which(ct_sub[[i]][,4] >= 0.5))*step_size
+      mean_value<-sum(ct_sub[[i]]$times * ct_sub[[i]]$ct)
+      variance_value<-sum((ct_sub[[i]]$times^2) * ct_sub[[i]]$ct) - mean_value^2
+      
     } else{
       a <- qlnorm(0.7, myu, sigma)
       b <- qlnorm(0.8, myu, sigma)
       c <- qlnorm(0.95, myu, sigma)
+      median_value <- qlnorm(0.5, myu, sigma)
     }
-    tile_sub[[i]] <- data.frame(tile=c("70%","80%","95%"),duration=c(a,b,c),DL=ct_sub[[i]]$DL[1])
+    tile_sub[[i]] <- data.frame(tile=c("70%","80%","95%"),duration=c(a,b,c),median=median_value, mean=mean_value,variance=variance_value,DL=ct_sub[[i]]$DL[1])
   }
   tile_plt <- map_df(tile_sub, ~as.data.frame(.x))
 }
