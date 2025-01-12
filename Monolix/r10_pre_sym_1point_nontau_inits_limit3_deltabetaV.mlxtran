@@ -1,0 +1,77 @@
+<DATAFILE>
+
+[FILEINFO]
+file={path='../submit/data/combine_VL_pre_and_sym_1point_limit3.csv'}
+delimiter = comma
+header={ID_site, site, Days_post_symptoms_onset, VL, censor}
+
+[CONTENT]
+ID_site = {use=identifier}
+site = {use=covariate, type=categorical}
+Days_post_symptoms_onset = {use=time}
+VL = {use=observation, type=continuous}
+censor = {use=censored}
+
+<MODEL>
+
+[COVARIATE]
+input = site
+
+site = {type=categorical, categories={'Oropharynx', 'Rectum', 'Saliva'}}
+
+[INDIVIDUAL]
+input = {beta_pop, omega_beta, delta_pop, omega_delta, r_pop, omega_r, v_pop, omega_v, site, beta_delta_site_Rectum, beta_delta_site_Saliva, beta_v_site_Rectum, beta_v_site_Saliva, beta_beta_site_Rectum, beta_beta_site_Saliva}
+
+site = {type=categorical, categories={'Oropharynx', 'Rectum', 'Saliva'}}
+
+DEFINITION:
+beta = {distribution=logNormal, typical=beta_pop, covariate=site, coefficient={0, beta_beta_site_Rectum, beta_beta_site_Saliva}, sd=omega_beta}
+delta = {distribution=logNormal, typical=delta_pop, covariate=site, coefficient={0, beta_delta_site_Rectum, beta_delta_site_Saliva}, sd=omega_delta}
+r = {distribution=logNormal, typical=r_pop, sd=omega_r}
+v = {distribution=logNormal, typical=v_pop, covariate=site, coefficient={0, beta_v_site_Rectum, beta_v_site_Saliva}, sd=omega_v}
+
+[LONGITUDINAL]
+input = {a}
+
+file = '../model/nontau.txt'
+
+DEFINITION:
+VL = {distribution=normal, prediction=Vaa, errorModel=constant(a)}
+
+<FIT>
+data = 'VL'
+model = VL
+
+<PARAMETER>
+a = {value=1, method=MLE}
+beta_beta_site_Rectum = {value=0, method=MLE}
+beta_beta_site_Saliva = {value=0, method=MLE}
+beta_delta_site_Rectum = {value=0, method=MLE}
+beta_delta_site_Saliva = {value=0, method=MLE}
+beta_pop = {value=0.00000001, method=MLE}
+beta_v_site_Rectum = {value=0, method=MLE}
+beta_v_site_Saliva = {value=0, method=MLE}
+delta_pop = {value=0.64, method=MLE}
+omega_beta = {value=1, method=MLE}
+omega_delta = {value=1, method=MLE}
+omega_r = {value=1, method=MLE}
+omega_v = {value=1, method=MLE}
+r_pop = {value=1, method=MLE}
+v_pop = {value=100000, method=MLE}
+
+<MONOLIX>
+
+[TASKS]
+populationParameters()
+individualParameters(method = {conditionalMean, conditionalMode })
+fim(method = StochasticApproximation)
+logLikelihood(method = ImportanceSampling)
+
+[PLOTS]
+run = true
+plots = {indfits = {selected = true}, parameterdistribution = {selected = true}, obspred = {selected = true}, covariancemodeldiagnosis = {selected = true}, covariatemodeldiagnosis = {selected = true}, vpc = {selected = true}, residualsscatter = {selected = true}, residualsdistribution = {selected = true}, randomeffects = {selected = true}, saemresults = {selected = true}}
+
+[SETTINGS]
+GLOBAL:
+exportpath = 'r10_pre_sym_1point_nontau_inits_limit3_deltabetaV'
+

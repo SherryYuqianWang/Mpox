@@ -1,0 +1,7 @@
+parameter,covariate,statistics,p-value,test
+delta,beta_delta_site_Rectum,0.850242,0.396056,t-Test
+delta,beta_delta_site_Saliva,0.285539,0.775483,t-Test
+beta,beta_beta_site_Rectum,-54.4154,<2.2e-16,t-Test
+beta,beta_beta_site_Saliva,-29.0189,<2.2e-16,t-Test
+v,beta_v_site_Rectum,13.9598,<2.2e-16,t-Test
+v,beta_v_site_Saliva,1.93009,0.0547991,t-Test

@@ -1,0 +1,126 @@
+********************************************************************************
+*          r10_pre_sym_1point_nontau_inits_limit3_deltabetaV.mlxtran           *
+*          December 06, 2024 at 15:32:05                                       *
+*          Monolix version : 2024R1                                            *
+********************************************************************************
+
+
+ESTIMATION OF THE POPULATION PARAMETERS ________________________________________
+
+Fixed Effects ----------------------------     se_sa    rse(%)   P2.5_sa  P97.5_sa
+r_pop                  :              3.19     0.658      20.6      2.16      4.72
+delta_pop              :             0.889     0.252      28.4     0.525      1.51
+beta_delta_site_Rectum :           -0.0152      0.42  2.77e+03    -0.839     0.809
+beta_delta_site_Saliva :            -0.044     0.417       949    -0.862     0.774
+beta_pop               :          2.15e-06   6.3e-06       293  2.42e-07  1.92e-05
+beta_beta_site_Rectum  :             -4.38      1.46      33.3     -7.23     -1.52
+beta_beta_site_Saliva  :             -2.38      2.01      84.8     -6.33      1.57
+v_pop                  :              47.1  1.35e+05  2.86e+05     0.187  1.19e+04
+beta_v_site_Rectum     :              5.43      4.26      78.4     -2.91      13.8
+beta_v_site_Saliva     :              1.07      4.73       443     -8.21      10.3
+
+Standard Deviation of the Random Effects -
+omega_r                :             0.843      0.18      21.4     0.562      1.27
+omega_delta            :             0.519     0.281      54.3      0.21      1.28
+omega_beta             :              1.23     0.481        39     0.616      2.47
+omega_v                :              5.07      1.84      36.2      2.64      9.75
+
+Error Model Parameters -------------------
+a                      :               1.4    0.0858      6.12      1.24      1.58
+
+Elapsed time (seconds):       23
+Exploratory phase iterations:      150 (Autostop)
+Smoothing phase iterations:         86 (Autostop)
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE INDIVIDUAL PARAMETERS ________________________________________
+
+
+Estimation of the individual parameters by Conditional Distribution ------------
+                  min            Q1        median            Q3           max  shrinkage(%)
+r     :          1.21          3.82          4.79          5.46          8.08          51.3
+delta :         0.453         0.827         0.952          1.15          1.73          54.2
+beta  :      1.46e-08      7.28e-08      4.28e-07      3.59e-06      7.18e-06          69.2
+v     :          7.18      3.32e+05      2.53e+06      3.87e+07      9.95e+09          61.9
+
+Elapsed time (seconds):       56
+Iterations:      522 (Autostop)
+
+ -------------------------------------------------------------------------------
+
+
+Estimation of the individual parameters by Conditional Mode --------------------
+                  min            Q1        median            Q3           max  shrinkage(%)
+r     :          1.12          2.34           3.2          4.16          8.25          47.9
+delta :         0.482         0.873         0.935           1.1          1.77          64.1
+beta  :      7.48e-09      3.36e-08         2e-07      1.91e-06      5.14e-06          68.7
+v     :         0.711          36.9           148      2.73e+03      2.54e+06          61.3
+
+Elapsed time (seconds):      1.5
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE FISHER INFORMATION MATRIX ____________________________________
+
+
+Estimation of the Fisher information matrix by Stochastic Approximation --------
+
+Correlation Matrix :
+                 r_pop         1
+             delta_pop  -0.10131         1
+beta_delta_site_Rectum   0.36496  -0.72258         1
+beta_delta_site_Saliva  -0.23487  -0.74523   0.46311         1
+              beta_pop   0.26086  -0.87201   0.76521   0.65617         1
+ beta_beta_site_Rectum   -0.2702   0.75491  -0.88183  -0.56355  -0.90468         1
+ beta_beta_site_Saliva   0.35967   0.61152  -0.29121  -0.90096  -0.61706   0.50241         1
+                 v_pop   -0.3781   0.67127  -0.61282  -0.49918  -0.79302    0.7189   0.46593         1
+    beta_v_site_Rectum   0.33703  -0.57831   0.78186   0.38165   0.72191  -0.81616  -0.30886  -0.80295         1
+    beta_v_site_Saliva  -0.34503  -0.52536   0.20257   0.78835   0.51474  -0.40509  -0.88796  -0.58765   0.36297         1
+               omega_r  -0.24516  0.049516  -0.52962  -0.11013  -0.25966   0.42826 0.0072237    0.2063  -0.42586  0.059778         1
+           omega_delta   0.60767  -0.31503   0.73373 0.0057929   0.49413  -0.63217     0.137  -0.44538   0.70384  -0.17332  -0.59628         1
+            omega_beta   0.16478   0.52911  -0.45566  -0.70286  -0.58635   0.59147   0.75544   0.52148  -0.50886  -0.71329   0.21922  -0.22272         1
+               omega_v  -0.56818  -0.14545  -0.36607   0.44025  0.017832   0.15483  -0.59698  0.001978  -0.28778   0.61993   0.43436  -0.71659  -0.28299         1
+                     a  -0.24919  -0.11686 -0.066674   0.25472  0.087571 -0.010535  -0.32592 -0.025968 -0.058869   0.29445   0.13199  -0.27419  -0.26437    0.3439         1
+
+                               min       max   max/min
+Eigen values           :     0.018         7     4e+02
+
+Elapsed time (seconds):       12
+Iterations:      100 (Autostop)
+
+ -------------------------------------------------------------------------------
+
+ _______________________________________________________________________________
+
+
+
+ESTIMATION OF THE LOG-LIKELIHOOD _______________________________________________
+
+                                                            (is)
+-2 x log-likelihood                       (OFV) :        1780.94
+Akaike Information Criteria               (AIC) :        1810.94
+Corrected Bayesian Information Criteria  (BICc) :        1867.10
+Bayesian Information Criteria             (BIC) :        1863.03
+
+Elapsed time                          (seconds) :          66.53
+CPU time                              (seconds) :          66.00
+MonteCarlo size (is):    10000 (Fixed number of iterations)
+
+
+[Importance Sampling] Standard error        : 0.227
+                      Sampling distribution : T-distribution with 5 degrees of freedom
+
+ _______________________________________________________________________________
+
+DATASET INFORMATION
+Number of individuals: 238
+Number of observations (VL): 538
+Number of doses: 0
+

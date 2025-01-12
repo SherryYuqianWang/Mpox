@@ -1,0 +1,7 @@
+parameter,statistics(sa),p-value(sa)
+beta_delta_site_Rectum,0.0361443,0.971
+beta_delta_site_Saliva,0.105374,0.916
+beta_beta_site_Rectum,3.00652,0.00264
+beta_beta_site_Saliva,1.17984,0.238
+beta_v_site_Rectum,1.27599,0.202
+beta_v_site_Saliva,0.225891,0.821

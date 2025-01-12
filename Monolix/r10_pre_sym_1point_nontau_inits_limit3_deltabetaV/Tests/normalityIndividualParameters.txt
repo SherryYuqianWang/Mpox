@@ -1,0 +1,5 @@
+parameter,statistics,p-value,test
+r,0.993687,0.682641,Shapiro-Wilk
+delta,0.04593,0.999953,Kolmogorov-Smirnov
+beta,0.256636,3.71133e-08,Kolmogorov-Smirnov
+v,0.874825,4.44089e-16,Kolmogorov-Smirnov
