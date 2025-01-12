@@ -5,8 +5,9 @@ library(tidyverse)
 library(purrr)
 
 
-setwd("C:/Users/yuqian.wang/NTU_Sherry/8Mpox/submit")
-path <- "C:/Users/yuqian.wang/NTU_Sherry/8Mpox/data/ID.xlsx"
+# Set your working directory to the project folder before running the script
+# Example: setwd("path/to/project")
+path <- "data/ID.xlsx"
 
 #setting
 DL <- 3 # Detection limit
