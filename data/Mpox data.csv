@@ -1,0 +1,85 @@
+Patient,Sample Location,Day,Symptom,Ct Value,last_contact,typical_symptom_onset,systematic_symptom_onset
+DI-01,Anorectal Swab,0,NA,15.9,-4,2,1
+DI-01,Anorectal Swab,1,Systemic,17.1,-4,2,1
+DI-01,Anorectal Swab,2,Typical,16.6,-4,2,1
+DI-01,Anorectal Swab,3,Typical,15.9,-4,2,1
+DI-01,Anorectal Swab,4,Typical,18.4,-4,2,1
+DI-01,Oropharyngeal Swab,0,NA,29.6,-4,2,1
+DI-01,Oropharyngeal Swab,4,Typical,22.9,-4,2,1
+DI-01,Saliva,0,NA,30.8,-4,2,1
+DI-01,Saliva,1,Systemic,27.1,-4,2,1
+DI-01,Saliva,2,Typical,27.2,-4,2,1
+DI-01,Saliva,3,Typical,25.5,-4,2,1
+DI-01,Saliva,4,Typical,25.3,-4,2,1
+DI-01,Genital Swab,0,NA,32.6,-4,2,1
+DI-01,Genital Swab,1,Systemic,35.9,-4,2,1
+DI-01,Genital Swab,2,Typical,30.6,-4,2,1
+DI-01,Genital Swab,3,Typical,36.4,-4,2,1
+DI-01,Genital Swab,4,Typical,35.9,-4,2,1
+DI-01,Serum,0,NA,45,-4,2,1
+DI-01,Serum,4,Typical,39.1,-4,2,1
+DI-02,Anorectal Swab,0,NA,38.7,-4,7,5
+DI-02,Anorectal Swab,1,NA,16.8,-4,7,5
+DI-02,Anorectal Swab,2,NA,16.7,-4,7,5
+DI-02,Anorectal Swab,3,NA,17,-4,7,5
+DI-02,Anorectal Swab,4,NA,15.5,-4,7,5
+DI-02,Anorectal Swab,5,Systemic,16.2,-4,7,5
+DI-02,Anorectal Swab,6,Systemic,16.3,-4,7,5
+DI-02,Anorectal Swab,7,Typical,15.9,-4,7,5
+DI-02,Anorectal Swab,8,Typical,18.2,-4,7,5
+DI-02,Anorectal Swab,9,Typical,16.3,-4,7,5
+DI-02,Genital Swab,0,NA,43.6,-4,7,5
+DI-02,Genital Swab,1,NA,36.1,-4,7,5
+DI-02,Genital Swab,2,NA,38.1,-4,7,5
+DI-02,Genital Swab,3,NA,37.2,-4,7,5
+DI-02,Genital Swab,4,NA,45,-4,7,5
+DI-02,Genital Swab,5,Systemic,45,-4,7,5
+DI-02,Genital Swab,6,Systemic,45,-4,7,5
+DI-02,Saliva,1,NA,38,-4,7,5
+DI-02,Saliva,2,NA,45,-4,7,5
+DI-02,Saliva,3,NA,45,-4,7,5
+DI-02,Saliva,4,NA,45,-4,7,5
+DI-02,Saliva,5,Systemic,39.3,-4,7,5
+DI-02,Saliva,6,Systemic,41.4,-4,7,5
+DI-02,Saliva,7,Typical,45,-4,7,5
+DI-02,Saliva,8,Typical,45,-4,7,5
+DI-02,Saliva,9,Typical,45,-4,7,5
+DI-02,Serum,4,NA,45,-4,7,5
+DI-02,Serum,9,Typical,39.4,-4,7,5
+DI-02,Oropharyngeal Swab,0,NA,45,-4,7,5
+DI-02,Oropharyngeal Swab,5,NA,45,-4,7,5
+DI-03,Saliva,0,NA,28.5,-5,1,1
+DI-03,Saliva,6,Typical,25.5,-5,1,1
+DI-03,Oropharyngeal Swab,0,NA,38.7,-5,1,1
+DI-03,Oropharyngeal Swab,9,Typical,24.2,-5,1,1
+DI-03,Oropharyngeal Swab,12,Typical,35.1,-5,1,1
+DI-03,Anorectal Swab,6,Typical,45,-5,1,1
+DI-03,Serum,0,NA,45,-5,1,1
+DI-03,Serum,6,Typical,35.6,-5,1,1
+DI-04,Anorectal Swab,0,NA,28.7,-4,6,4
+DI-04,Anorectal Swab,1,NA,19.7,-4,6,4
+DI-04,Anorectal Swab,2,NA,20.1,-4,6,4
+DI-04,Anorectal Swab,3,NA,22.3,-4,6,4
+DI-04,Anorectal Swab,4,Systemic,17.4,-4,6,4
+DI-04,Anorectal Swab,5,Systemic,19.4,-4,6,4
+DI-04,Anorectal Swab,6,Typical,16.6,-4,6,4
+DI-04,Anorectal Swab,7,Typical,16,-4,6,4
+DI-04,Saliva,0,NA,45,-4,6,4
+DI-04,Saliva,1,NA,45,-4,6,4
+DI-04,Saliva,2,NA,45,-4,6,4
+DI-04,Saliva,3,NA,45,-4,6,4
+DI-04,Saliva,4,Systemic,45,-4,6,4
+DI-04,Saliva,5,Systemic,37,-4,6,4
+DI-04,Saliva,6,Typical,45,-4,6,4
+DI-04,Genital Swab,0,NA,45,-4,6,4
+DI-04,Genital Swab,1,NA,45,-4,6,4
+DI-04,Genital Swab,2,NA,45,-4,6,4
+DI-04,Genital Swab,3,NA,45,-4,6,4
+DI-04,Genital Swab,4,Systemic,45,-4,6,4
+DI-04,Genital Swab,5,Systemic,32.3,-4,6,4
+DI-04,Genital Swab,6,Typical,38.4,-4,6,4
+DI-04,Genital Swab,7,Typical,35.1,-4,6,4
+DI-04,Oropharyngeal Swab,0,NA,45,-4,6,4
+DI-04,Oropharyngeal Swab,7,Typical,45,-4,6,4
+DI-04,Serum,0,NA,45,-4,6,4
+DI-04,Serum,7,Typical,35.4,-4,6,4
