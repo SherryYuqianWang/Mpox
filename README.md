@@ -36,4 +36,4 @@ Brosius, I., Van Dijck, C., Coppens, J., Vandenhove, L., Bangwen, E., Vanroye, F
 ## Maintainer
 
 Current maintainer:
-- Yuqian Wang (yuqian.wang@ntu.edu.sg)
+- Yuqian Wang (yuqian.wang[at]uzh[dot]ch)
