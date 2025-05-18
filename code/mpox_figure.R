@@ -13,13 +13,16 @@ library(cowplot)
 
 rm(list=ls())
 
-# Set your working directory to the project folder before running the script
-# Example: setwd("path/to/project")
-source("code/mpox_function.R")
+# Set your path to the project folder before running the script
+# Example: 
+MPOXpath <- "~/path_to_project/"
+
+
+source(paste0(MPOXpath,"Mpox/code/mpox_function.R"))
 # Setting ######################################################################
 
 Tmin <- 0
-Tmax <- 28
+Tmax <- 36
 Tmax_pre <- -8
 
 step_size <- 0.1
@@ -28,10 +31,10 @@ times<-c(seq(Tmax_pre,Tmax,step_size))
 DL <- log10(10^3) # Detection limit
 
 # Figure 1 & Figure S1 Population fit ##########################################
-pop <- read.csv("Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/populationParameters.txt", row.names = 1)
+pop <- read.csv(paste0(MPOXpath,"Mpox/Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/populationParameters.txt"), row.names = 1)
 
 
-original <- read.csv("data/combine_VL_pre_and_sym_1point_limit3.csv")
+original <- read.csv(paste0(MPOXpath,"Mpox/data/combine_VL_pre_and_sym_1point_limit3.csv"))
 original$site <- factor(original$site, levels=c('Rectum', 'Saliva','Oropharynx'))
 original_site <- split(original, f = original$site)
 
@@ -119,25 +122,30 @@ ggsave("figure/Figure1.png", width = 8, height = 2.5,bg = "white")
 
 
 #Figure Individual fit#########################################################
-original_ind <- read.csv("data/combine_VL_pre_and_sym_1point_limit3.csv") 
-colnames(original)[c(1,16)] <- c("Code","VL")
+original_ind <- read.csv(paste0(MPOXpath,"Mpox/data/combine_VL_pre_and_sym_1point_limit3.csv")) 
+#colnames(original)[c(1,16)] <- c("Code","VL")
 
 #individual fit from Monolix
-Est <- read.csv("Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/IndividualParameters/estimatedIndividualParameters.txt", sep = ",", comment.char = "", header = T)
+Est <- read.csv(paste0(MPOXpath,"Mpox/Monolix/r10_pre_sym_1point_nontau_inits_limit3_deltabetaV/IndividualParameters/estimatedIndividualParameters.txt"), sep = ",", comment.char = "", header = T)
 
 #Generate figures
 ind_fit <- list()
-ind_fit <- ind_fit_plt(Est)
+ind_fit <- ind_fit_plt(Est) %>%
+  mutate(ID = as.character(ID))
 
 ind_fit$site <- factor(ind_fit$site, levels=c('Rectum', 'Saliva','Oropharynx'))
 
-
-ind_fit_sub <- ind_fit %>%
+ind_fit_remove_censorsite <- ind_fit %>%
   group_by(ID_site) %>%
-  mutate(ID = as.character(ID)) %>%
+  #mutate(ID = as.character(ID)) %>%
   filter(any(censor == 0)) %>%
-  ungroup() %>%
-  mutate(ID = as.factor(ID))
+  ungroup() 
+
+ind_fit_sub <- ind_fit_remove_censorsite %>%
+  mutate(ID = ifelse(
+    grepl("^P[1-9]$", ID),
+    sprintf("P0%d", as.numeric(sub("P", "", ID))),
+    ID))
 
   ggplot(ind_fit_sub) +
       geom_jitter(aes(x=Day,y=VL,colour=site,shape=censor),size=2,height=0.1,width = 0.2) +
@@ -153,8 +161,8 @@ ind_fit_sub <- ind_fit %>%
       mpox_theme()+
       theme(legend.position='bottom')
   
-ggsave("figure/Figure_ind_SAEM_censor_site.png", width = 10, height = 12,bg = "white")
-    
+ggsave(paste0(MPOXpath,"figure/FigureS1_remove_censorsite.png"), width = 10, height = 12,bg = "white")
+
 #Correlation oro and saliva####################################################
 
 # Function to generate a ggpairs plot for a given variable prefix
@@ -206,7 +214,7 @@ combined_plot <- plot_grid(
 # Display the combined plot
 print(combined_plot)
 
-ggsave("figure/Figure_v_cor.png", width = 10, height = 8,bg = "white")
+ggsave(paste0(MPOXpath,"figure/Figure_v_cor.png"), width = 10, height = 8,bg = "white")
 
 
 ##Figure 1 Estimated viral load of different sites##############################
@@ -222,9 +230,9 @@ ggplot(data=combine_pop) +
   mpox_theme()+
   theme(legend.position = "right")
 
-ggsave("plot/Figure1.png", width = 7, height = 4.5,bg = "white")
+ggsave(paste0(MPOXpath,"plot/Figure1.png"), width = 7, height = 4.5,bg = "white")
 
-write.csv(combine_pop,"output/VLpop.csv")
+write.csv(combine_pop,paste0(MPOXpath,"output/VLpop.csv"))
 
 # Figure 2 false-negative #######################################################
 num = 10000
@@ -278,7 +286,7 @@ ggplot(data=combine_fn) +
   theme(legend.position = "right")
 
 
-ggsave("figure/Figure_neg_10k.png", width = 8, height = 2.5,bg = "white")
+ggsave(paste0(MPOXpath,"figure/Figure_neg_10k.png"), width = 8, height = 2.5,bg = "white")
 
 ##visualize simulation data (with tau)################################
 
@@ -371,7 +379,7 @@ ggplot(data=combine_ct_plt1) +
   mpox_theme()+
   theme(legend.position = "right")
 
-ggsave("figure/FigureS21.png", width = 7, height = 3.8,bg = "white")
+ggsave(paste0(MPOXpath,"figure/FigureS21.png"), width = 7, height = 3.8,bg = "white")
 
 ## Figure 3 bar chart of effectiveness of health screening and PCR##############
 pie_plt <- combine_ct_plt[combine_ct_plt$DL != "No tests",c(1,4,7,8,9)] %>% 
@@ -398,7 +406,7 @@ ggplot(pie_plt, aes(x = DL, y = prob, fill=type)) +
         axis.text.x = element_text(angle = 20, vjust = 0.75),
         axis.title.x = element_blank())
 
-ggsave("figure/Figure3_uni.png", width = 8, height = 2.5,bg = "white")
+ggsave(paste0(MPOXpath,"figure/Figure3_uni.png"), width = 8, height = 2.5,bg = "white")
 
 #Figure 4 70th, 80th, 95th percentile of post-entry incubation period ##########
 
@@ -426,6 +434,6 @@ ggplot(data=combine_tile, aes(x=DL, y=duration)) +
         axis.text.x = element_text(angle = 20, vjust = 0.75),
         axis.title.x = element_blank())
 
-ggsave("figure/Figure4_uni.png", width = 7, height = 3, bg = "white")
+ggsave(paste0(MPOXpath,"figure/Figure4_uni.png"), width = 7, height = 3, bg = "white")
 
-write.csv(combine_tile, "output/percentile_incubation_exp.csv")
+write.csv(combine_tile, paste0(MPOXpath,"output/percentile_incubation_exp.csv"))

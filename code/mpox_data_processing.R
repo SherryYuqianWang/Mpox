@@ -5,9 +5,11 @@ library(tidyverse)
 library(purrr)
 
 
-# Set your working directory to the project folder before running the script
-# Example: setwd("path/to/project")
-path <- "data/ID.xlsx"
+# Set your full paths for the project folder before running the script
+# Example:
+MPOXpath <- "~/path_to_project/"
+
+path <- paste0(MPOXpath,"Mpox/data/ID.xlsx")
 
 #setting
 DL <- 3 # Detection limit
@@ -44,13 +46,13 @@ combine_VL <- map_df(original[c('Rectum','Saliva','Oropharynx')], ~as.data.frame
   ungroup() %>%
   unite(ID_site, c("ID", "site"),remove = FALSE)
 
-write.csv(combine_VL, file = 'data/combine_VL_site_1point.csv',row.names=FALSE)
+write.csv(combine_VL, file = paste0(MPOXpath,"Mpox/data/combine_VL_site_1point.csv"),row.names=FALSE)
 
 
 # Split the data frame by a specific column, say 'category'
 split_VL <- split(combine_VL, combine_VL$site)
 
-output_path <- "data/" 
+output_path <- paste0(MPOXpath,"Mpox/data/") 
 
 # Save each split data frame to a separate Excel file
 for (name in names(split_VL)) {
@@ -68,7 +70,7 @@ for (name in names(split_VL)) {
 
 
 #Combine pre-symptomatic and symptomatic data#####
-pre_sym <- read_csv("data/Mpox data.csv")
+pre_sym <- read_csv(paste0(MPOXpath,"Mpox/data/Mpox data.csv"))
 
 #unique value
 unique(pre_sym$`Sample Location`)
@@ -96,6 +98,6 @@ df1_common <- combine_VL[, common_columns, drop = FALSE]
 df2_common <- sub_presym[, common_columns, drop = FALSE]
 
 combine_sym <- rbind(df1_common, df2_common)
-write.csv(combine_sym, file = 'data/combine_VL_pre_and_sym_1point_limit3.csv',row.names=FALSE)
+write.csv(combine_sym, file = paste0(MPOXpath,'Mpox/data/combine_VL_pre_and_sym_1point_limit3.csv'),row.names=FALSE)
   
   

@@ -124,7 +124,7 @@ sample_pars_pop <- function(pop, num, rectum, saliva){
 run_ODE_pop <- function(pars,incu){
   
   #total_VL <- matrix(NA,nrow=length(seq(Tmin,Tmax,step_size)),ncol=num)
-  total_VL <- matrix(NA,nrow=length(seq(Tmax_pre,Tmax,step_size)),ncol=num)
+  total_VL <- matrix(NA,nrow=length(seq(Tmin,Tmax,step_size)),ncol=num)
   
   for(i in 1:num){
     out <- Mpoxfun_pre(as.numeric(pars[i, ]),incu)
