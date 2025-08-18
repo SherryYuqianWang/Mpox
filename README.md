@@ -10,7 +10,8 @@
 
 ## Introduction
 
-This repository contains the code and data used for the manuscript titled "Evaluating the Effectiveness of International Travel Controls to Identify Monkeypox Virus Infected Travelers".
+This repository contains the code and data used for the following manuscript: 
+Ejima, K., Wang, Y., Endo, A. et al. Evaluating the effectiveness of international travel controls to identify MPXV-infected travelers: a simulation study. BMC Med 23, 473 (2025). https://doi.org/10.1186/s12916-025-04286-6
 
 
 ## Requirements
